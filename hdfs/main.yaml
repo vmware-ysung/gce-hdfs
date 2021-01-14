@@ -1,0 +1,31 @@
+---
+- hosts: master,worker
+  gather_facts: no
+  become: yes
+  tasks:
+  - name: Install CDH 5 repo
+    get_url:
+      url: https://archive.cloudera.com/cdh5/redhat/7/x86_64/cdh/cloudera-cdh5.repo
+      dest: /etc/yum.repos.d/
+- hosts: master
+  gather_facts: no
+  become: yes
+  tasks:
+  - name: Install hadoop master services
+    dnf:
+      name: ['hadoop-yarn-resourcemanager', 'hadoop-hdfs-namenode','hadoop-client']
+      state: present
+- hosts: worker
+  gather_facts: no
+  become: yes
+  tasks:
+  - name: Install hadoop worker services
+    dnf:
+      name: ['hadoop-yarn-nodemanager', 'hadoop-hdfs-datanode', 'hadoop-mapreduce', 'hadoop-yarn-proxyserver']
+      state: present
+  
+
+#core-site.xml - fs.defaultFS
+#hdfs-site.xml - dfs.permissions.superusergroup
+#hdfs-site.xml - dfs.name.dir
+#hdfs-site.xml - dfs.data.dir

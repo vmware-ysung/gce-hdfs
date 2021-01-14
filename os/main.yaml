@@ -1,0 +1,48 @@
+---
+- hosts: all
+  gather_facts: no
+  become: yes
+  tasks: 
+  - name: Waiting for ssh
+    wait_for_connection:
+      timeout: 900
+  - name: Disabling firewalld
+    systemd:
+      name: firewalld
+      enabled: no
+      state: stopped
+  - name: Disabling SELinux
+    selinux:
+      state: disabled
+- hosts: ipa
+  gather_facts: no
+  become: yes
+  tasks:
+  - name: Installing idm module
+    dnf:
+      name: '@idm:DL1'
+      state: present
+  - name: Installing ipa-server
+    dnf:
+      name: ['freeipa-server','ipa-server-dns','bind-dyndb-ldap','wget']
+      state: present
+  - name: Configuring ipa-server
+    shell: "ipa-server-install -U -p VMware1! -a VMware1! -n hdfs.ysung.vmware -r HDFS.YSUNG.VMWARE --hostname=myipa.hdfs.ysung.vmware --no-host-dns --setup-kra --mkhomedir"
+- hosts: master,worker
+  gather_facts: no
+  become: yes
+  tasks:
+  - name: Installing client
+    dnf:
+      name: ['bind-utils','freeipa-client','openldap-clients','java-1.8.0-openjdk.x86_64']
+      state: present
+  - name: Adding ipa-server to all /etc/hosts
+    lineinfile:
+      dest: /etc/hosts
+      line: 192.168.10.4 myipa.hdfs.ysung.vmware myipa
+      state: present
+  - name: Install ipa-client
+    shell: "ipa-client-install -p admin -U --server myipa.hdfs.ysung.vmware --domain hdfs.ysung.vmware --password VMware1!"gp
+
+
+
